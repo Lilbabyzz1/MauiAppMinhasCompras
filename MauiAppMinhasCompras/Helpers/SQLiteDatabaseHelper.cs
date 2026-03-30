@@ -6,10 +6,11 @@ namespace MauiAppMinhasCompras.Helpers
     public class SQLiteDatabaseHelper
     {
         readonly SQLiteAsyncConnection _conn;
-        public SQLiteDatabaseHelper(string path) 
+        public SQLiteDatabaseHelper(string path)
         {
-          _conn = new SQLiteAsyncConnection(path);
-          _conn.CreateTableAsync<Produto>().Wait();
+            _conn = new SQLiteAsyncConnection(path);
+            _conn.DropTableAsync<Produto>().Wait();
+            _conn.CreateTableAsync<Produto>().Wait();
         }
 
         public Task<int> Insert(Produto p) 
@@ -19,10 +20,10 @@ namespace MauiAppMinhasCompras.Helpers
 
         public Task<List<Produto>> Update(Produto p) 
         {
-            string sql = "UPDATE Produto SET Descricao=?, Quantidade=?, Preco=? WHERE Id=?";
+            string sql = "UPDATE Produto SET Descricao=?, Quantidade=?, Preco=?, Categoria=? WHERE Id=?";
             
             return _conn.QueryAsync<Produto>(
-                sql, p.Descricao, p.Quantidade, p.Preco, p.Id
+                sql, p.Descricao, p.Quantidade, p.Preco, p.Categoria, p.Id
                 
                 );  
         }
@@ -44,5 +45,18 @@ namespace MauiAppMinhasCompras.Helpers
 
             return _conn.QueryAsync<Produto>(sql, parametro);
         }
+
+        public async Task ResetId()
+        {
+            await _conn.ExecuteAsync("DELETE FROM sqlite_sequence WHERE name='Produto'");
+        }
+        public Task<List<Produto>> FilterCategoria(string categoria)
+        {
+            string sql = "SELECT * FROM Produto WHERE Categoria = ?";
+            string param = "%" + categoria + "%";
+
+            return _conn.QueryAsync<Produto>(sql, categoria);
+        }
+
     }
 }

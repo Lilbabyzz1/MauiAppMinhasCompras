@@ -17,10 +17,16 @@ public partial class ListaProduto : ContentPage
 
     protected async override void OnAppearing()
 	{
-        lista.Clear();
-        List<Produto> tmp = await App.Db.GetAll();
-        tmp.ForEach(i => lista.Add(i));
-
+        try
+        {
+            lista.Clear();
+            List<Produto> tmp = await App.Db.GetAll();
+            tmp.ForEach(i => lista.Add(i));
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Opss", ex.Message, "OK");
+        }
 	}
 
 	private void ToolbarItem_Clicked(object sender, EventArgs e)
@@ -37,13 +43,26 @@ public partial class ListaProduto : ContentPage
 
     private async void txt_search_TextChanged(object sender, TextChangedEventArgs e)
 	{
-		string q = e.NewTextValue;
+        try
+        {
+            string q = e.NewTextValue;
 
-		lista.Clear();
+            lst_produtos.IsRefreshing = true;
 
-        List<Produto> tmp = await App.Db.Search(q);
+            lista.Clear();
 
-        tmp.ForEach(i => lista.Add(i));
+            List<Produto> tmp = await App.Db.Search(q);
+
+            tmp.ForEach(i => lista.Add(i));
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Opss", ex.Message, "OK");
+        }
+        finally
+        {
+            lst_produtos.IsRefreshing = false;
+        }
 	}
 
 	private void ToolbarItem_Clicked_1(object sender, EventArgs e)
@@ -70,6 +89,11 @@ public partial class ListaProduto : ContentPage
                     lista.Remove(produto);
                     await App.Db.Delete(produto.Id);
                 }
+                var restante = await App.Db.GetAll();
+                if (restante.Count == 0)
+                {
+                    await App.Db.ResetId();
+                }
             }
         }
      }
@@ -91,4 +115,71 @@ public partial class ListaProduto : ContentPage
             DisplayAlert("Ops", ex.Message, "OK");
         }
     }
+
+    private async void lst_produtos_Refreshing(object sender, EventArgs e)
+    {
+        try
+        {
+            lista.Clear();
+
+            List<Produto> tmp = await App.Db.GetAll();
+
+            tmp.ForEach(i => lista.Add(i));
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Opss", ex.Message, "OK");
+
+        }finally
+        {
+            lst_produtos.IsRefreshing = false;
+        }
+    }
+
+    private async void ToolbarItem_Clicked_2(object sender, EventArgs e)
+    {
+        var produtos = await App.Db.GetAll();
+
+        var relatorio = produtos
+            .GroupBy(p => p.Categoria)
+            .Select(g => new
+            {
+                Categoria = g.Key,
+                Total = g.Sum(p => p.Total)
+            });
+
+        string msg = "";
+
+        foreach (var item in relatorio)
+        {
+            msg += $"{item.Categoria}: {item.Total:C}\n";
+        }
+
+        await DisplayAlert("Relatório por Categoria", msg, "OK");
+    }
+
+    private async void txt_categoria_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        try
+        {
+            string q = e.NewTextValue;
+
+            lst_produtos.IsRefreshing = true;
+
+            lista.Clear();
+
+            List<Produto> tmp = await App.Db.FilterCategoria(q);
+
+            tmp.ForEach(i => lista.Add(i));
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Opss", ex.Message, "OK");
+        }
+        finally
+        {
+            lst_produtos.IsRefreshing = false;
+        }
+    }
+
 }

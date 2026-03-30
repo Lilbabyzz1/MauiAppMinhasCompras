@@ -7,6 +7,7 @@ namespace MauiAppMinhasCompras.Models
         string _descricao;
         double _quantidade;
         double _preco;
+        string _categoria;
 
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
@@ -47,5 +48,22 @@ namespace MauiAppMinhasCompras.Models
             } 
         }
         public double Total { get => Quantidade * Preco; }
+
+        public string Categoria
+        {
+            get => _categoria;
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    _categoria = "Sem categoria";
+                }
+                else
+                {
+                    _categoria = value;
+                }
+            }
+        }
+
     }
 }
