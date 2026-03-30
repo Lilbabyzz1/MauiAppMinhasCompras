@@ -9,7 +9,6 @@ namespace MauiAppMinhasCompras.Helpers
         public SQLiteDatabaseHelper(string path)
         {
             _conn = new SQLiteAsyncConnection(path);
-            _conn.DropTableAsync<Produto>().Wait();
             _conn.CreateTableAsync<Produto>().Wait();
         }
 
@@ -50,12 +49,13 @@ namespace MauiAppMinhasCompras.Helpers
         {
             await _conn.ExecuteAsync("DELETE FROM sqlite_sequence WHERE name='Produto'");
         }
+
         public Task<List<Produto>> FilterCategoria(string categoria)
         {
-            string sql = "SELECT * FROM Produto WHERE Categoria = ?";
+            string sql = "SELECT * FROM Produto WHERE Categoria LIKE ?";
             string param = "%" + categoria + "%";
 
-            return _conn.QueryAsync<Produto>(sql, categoria);
+            return _conn.QueryAsync<Produto>(sql, param);
         }
 
     }
